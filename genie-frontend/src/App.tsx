@@ -1,26 +1,44 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import PromptInput from './components/PromptInput';
+import ResultsDisplay from './components/ResultsDisplay';
+import LoadingSpinner from './components/LoadingSpinner';
 
-function App() {
+const App: React.FC = () => {
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchKeywords = async (prompt: string) => {
+      setLoading(true);
+      try {
+          const response = await fetch('http://127.0.0.1:8000/process-prompt/', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ prompt }),
+          });
+
+          if (!response.ok) {
+              throw new Error('Network response was not ok');
+          }
+
+          const data = await response.json();
+          setKeywords(data.keywords);
+      } catch (error) {
+          console.error('Error fetching keywords:', error);
+      } finally {
+          setLoading(false);
+      }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-blue-200 to-purple-300 p-5">
+          <h1>Genie</h1>
+          <PromptInput onSubmit={fetchKeywords} />
+          {loading ? <LoadingSpinner /> : <ResultsDisplay keywords={keywords} />}
+      </div>
   );
-}
+};
+
 
 export default App;
